@@ -1,114 +1,60 @@
 'use strict'
 
-const apiKey = 'gEThUBZziE0HqLA7Eay4xZje3S1xnicnbIXOyRm2'; 
-const searchURL = 'https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=gEThUBZziE0HqLA7Eay4xZje3S1xnicnbIXOyRm2';
-
-const queryString = formatQueryParams(params)
-const url = searchURL + '?' + queryString;
-
-function formatQueryParams(params){
-
-    const queryItems = Object.keys(params)
-
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-        console.log(queryItems.join('&'));
-}
-
-function displayResults(){
-
-}
-
-function getParks(){
-    const params = {
-        key: apiKey,
-        q: query,
-        part: 'snippet',
-        maxResults,
-        type: 'video'
-      };
-    fetch('')
-}
-
-function initSubmit(){
-
-}
-
-
-
-//////////////
-//////////////
-//////////////
-//////////////
-//////////////
-//////////////
-//////////////
-//////////////
-
-
-
-// put your own value below!
-const apiKey = 'gEThUBZziE0HqLA7Eay4xZje3S1xnicnbIXOyRm2'; 
-const searchURL = 'https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=gEThUBZziE0HqLA7Eay4xZje3S1xnicnbIXOyRm2';
-
-
-function formatQueryParams(params) {
-  const queryItems = Object.keys(params)
-    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-  return queryItems.join('&');
-}
-
-function displayResults(responseJson) {
-  // if there are previous results, remove them
-  console.log(responseJson);
-  $('#results-list').empty();
-  // iterate through the items array
-  for (let i = 0; i < responseJson.items.length; i++){
-    // for each video object in the items 
-    //array, add a list item to the results 
-    //list with the video title, description,
-    //and thumbnail
-    $('#results-list').append(
-      `<li><h3>${responseJson.items[i].snippet.title}</h3>
-      <p>${responseJson.items[i].snippet.description}</p>
-      <img src='${responseJson.items[i].snippet.thumbnails.default.url}'>
-      </li>`
-    )};
-  //display the results section  
-  $('#results').removeClass('hidden');
-};
-
-function getYouTubeVideos(query, maxResults=50) {
-  const params = {
-    key: apiKey,
-    q: query,
-    stateCode: 'ca',
-    maxResults,
-  };
-  const queryString = formatQueryParams(params)
-  const url = searchURL + '?' + queryString;
-
-  console.log(url);
-
-  fetch(url)
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error(response.statusText);
-    })
-    .then(responseJson => displayResults(responseJson))
-    .catch(err => {
-      $('#js-error-message').text(`Something went wrong: ${err.message}`);
-    });
-}
-
-function watchForm() {
-  $('form').submit(event => {
+function getUserInput(){
+  $('#js-form').on('submit', function(){
     event.preventDefault();
-    const searchTerm = $('#js-search-term').val();
-    const maxResults = $('#js-max-results').val();
-    getYouTubeVideos(searchTerm, maxResults);
+    let state = document.getElementById("js-search-term").value;
+    let limit = document.getElementById("js-max-results").value;
+    const queryString = 'stateCode=' + state + '&limit=' + limit;
+    console.log(queryString);
+    formulateRequest(queryString)
   });
 }
 
-$(watchForm);
+function formulateRequest(queryString){
+  const baseURL = 'https://developer.nps.gov/api/v1/parks';
+  const apiKey = 'api_key=gEThUBZziE0HqLA7Eay4xZje3S1xnicnbIXOyRm2';
+  const start = 'start=0';
+  const url = baseURL + '?' + apiKey + '&' + start + '&' + queryString;
+  sendGET(url);
+}
+
+function sendGET(url){
+  fetch(url)
+    .then(response => response.json() )
+    .then(responseJson => grabResponses(responseJson))
+    .catch(error => alert('Something went wrong, try reformatting the state code with lowercase letters and separate by comma'))
+}
+
+function grabResponses(responseJson){
+  $('#results-list').empty();
+  let theLimit = document.getElementById("js-max-results").value;
+
+  console.log(responseJson)
+
+  for(let i = 0; i < theLimit; i++){
+    let parkName = responseJson.data[i].name;
+    let description = responseJson.data[i].description;
+    let parkURL = responseJson.data[i].url;
+    displayResults(parkName, description, parkURL, );
+  }
+}
+
+function displayResults(parkName, description, parkURL){
+  $('#results-list').append(`
+  <li>
+  <p>Name of park:  ${parkName}</p>
+
+  <p>Description of park: <p>${description}</p>
+
+  <p>Park website: <p><a href="${parkURL}">Go to park website!</a></p>
+  </li>
+  `)
+  $('.results').removeClass('hidden');
+}
+
+$(function runIt() {
+  $(document).ready() 
+  console.log('Locked n Loaded');
+  getUserInput();
+});
